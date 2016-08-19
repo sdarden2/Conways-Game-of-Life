@@ -1,10 +1,12 @@
 #Conways game of life
-#First need an outline of an algorithm
 #The idea is that the board is a function of the previous board, with the first drop of cells being the seed
 #The previous state determines the next state
-#First, we want to write this program using sequential and function based steps, not object oriented
 
-"""The board can just be an matrix of 0's and 1's, 0 for dead, 1 for alive"""
+
+"""
+Conway's Game of life Algorithm (psuedo-code)
+=============================================
+The board can just be an matrix of 0's and 1's, 0 for dead, 1 for alive"""
 """
 main()
 {
@@ -50,8 +52,6 @@ cell_alive()
 	set cell color black
 }
 """
-#Holds the (x,y) coordinates from clicking
-
 
 
 from Tkinter import *
@@ -61,10 +61,12 @@ import time
 import copy
 DEFAULT_BOARD_WIDTH = 700
 DEFAULT_BOARD_HEIGHT = 700
-GRID_SIZE = {'x':75, 'y':75}
-gx = 'x'
-gy = 'y'
+#--TODO--- Change GRID_SIZE to GRID_SIZE_X and GRID_SIZE_Y
+GRID_SIZE_X = 75
+GRID_SIZE_Y = 75
 
+#Turns on the specified cell. Can either specify the cell by using the actual cell.
+#Or by passing in the x,y coordinates of the cell. No return
 
 def turn_alive(cell,x=-1,y=-1):
 	if x == -1 or y == -1:
@@ -74,6 +76,10 @@ def turn_alive(cell,x=-1,y=-1):
 	board.itemconfigure(cell,fill='black')
 	game_matrix[loc[0]][loc[1]] = 1
 	board.update()
+	
+#Turns a cell off. Can either pass in the actual cell or pass in the x,y coordinates
+#of the cell. No return	
+
 def kill(cell,x=-1,y=-1):
 	if x == -1 or y == -1:
 		loc = find_in_matrix(cell)
@@ -83,72 +89,88 @@ def kill(cell,x=-1,y=-1):
 	game_matrix[loc[0]][loc[1]] = 0
 	board.update()
 
+#Changes the current state of the board to the state of `matrix`. Returns nothing.
+
 def change_board(matrix):
-	for r in range(GRID_SIZE[gx]):
-		for c in range(GRID_SIZE[gy]):
+	for r in range(GRID_SIZE_X):
+		for c in range(GRID_SIZE_Y):
 			game_matrix[r][c] = matrix[r][c]
+			
+#Updates the board `board` with the `game_matrix`. Returns nothing.
+#This is the main way the board is updated. `game_matrix` represents the next state
+#and update_board updates the current state to the next.
+
 def update_board():
-	for r in range(GRID_SIZE[gx]):
-		for c in range(GRID_SIZE[gy]):
+	for r in range(GRID_SIZE_X):
+		for c in range(GRID_SIZE_Y):
 			if game_matrix[r][c] == 1:
 				board.itemconfig(rect_mat[r][c],fill="black")
 			else:
 				board.itemconfig(rect_mat[r][c],fill="white")
 	board.update()
+	
+#Main game loop
+#`board` is the actual canvas with cells on it, `rect_mat` is the internal matrix which holds numbers
+#representing if the cell if alive `1` or dead `0`
+#The main loop executes the main algorithm on CGOL
+
 def game_loop():
-	state_mat = copy.copy(game_matrix)
+	state_mat = copy.copy(game_matrix) #save current state in state_mat
 	k = 0
+	
 	while True:
-		for i in range(GRID_SIZE[gx]):
-			for j in range(GRID_SIZE[gy]):
+		for i in range(GRID_SIZE_X):
+			for j in range(GRID_SIZE_Y):
 				cell = rect_mat[i][j]
+				
 				if game_matrix[i][j] == 1:
 					nbs = get_neighbors(cell)
 					res = [1 for ind in nbs if is_alive(rect_mat[ind[0]][ind[1]])]
+					
 					if len(res) < 2:
 						state_mat[i][j] = 0
 						
-						#kill(cell,i,j)
 					elif len(res) > 3:
 						state_mat[i][j] = 0
 						
-						#kill(cell,i,j)
 				else:
 					nbs = get_neighbors(cell)
 					res = [1 for ind in nbs if is_alive(rect_mat[ind[0]][ind[1]])]
+					
 					if len(res) == 3 or len(res) == 4:
-						
-						#print "Creating cell"
 						state_mat[i][j] = 1
-						#turn_alive(cell,i,j)
+						
 		change_board(state_mat)
 		update_board()
-		#time.sleep(.01)
-		#board.update()
-		#k += 1
 		
 		
+#Find the i,j position of the `cell` in the matrix
+
 def find_in_matrix(cell):
-	#Because we essentially have object numbered 1 through GRID_SIZE[gx]*GRID_SIZE[gy],
+	#Because we essentially have object numbered 1 through GRID_SIZE_X*GRID_SIZE_Y,
 	#We can use the numbers to find the indices quickly
-	i = (cell-1) /GRID_SIZE[gy]
-	j = (cell % GRID_SIZE[gx]) - 1
+	
+	i = (cell-1) /GRID_SIZE_Y
+	j = (cell % GRID_SIZE_X) - 1
 	if j == -1:
 		j = 24
 	return (i,j)
 	
-#If you're having a probelm with non-square grids, check the gx and gy params to GRID_SIZE
+#Returns list of i,j poistions in the matrix of all neighboring cells to `cell`
+
 def get_neighbors(cell):
 	"""need edge cases for this"""
-	(i,j) = find_in_matrix(cell) #BIG PROBLEM HERE --- Not anymore
+	
+	(i,j) = find_in_matrix(cell) 
 	lst = []
+	
 	#case top row
 	if i == 0:
 		if j == 0: #Top left corner
 			lst.append((i+1,j+1))
 			lst.append((i+1,j))
 			lst.append((i,j+1))
-		elif j >= GRID_SIZE[gx] - 1: #Top right corner
+		elif j >= GRID_SIZE_X - 1: #Top right corner
 			lst.append((i,j-1))
 			lst.append((i-1,j-1))
 			lst.append((i-1,j))
@@ -158,12 +180,11 @@ def get_neighbors(cell):
 			lst.append((i-1,j))
 			lst.append((i-1,j-1))
 			lst.append((i-1,j+1))
-	elif i >= GRID_SIZE[gy] - 1: #Bottom row
-		if j >= GRID_SIZE[gx] - 1: #Bottom right corner
+	elif i >= GRID_SIZE_Y - 1: #Bottom row
+		if j >= GRID_SIZE_X - 1: #Bottom right corner
 			lst.append((i,j-1))
 			lst.append((i-1,j-1))
 			lst.append((i-1,j))
-		
 		elif j == 0: #Bottem left corner
 			lst.append((i-1,j))
 			lst.append((i-1,j+1))
@@ -180,7 +201,7 @@ def get_neighbors(cell):
 		lst.append((i,j+1))
 		lst.append((i-1,j+1))
 		lst.append((i-1,j))
-	elif j >= GRID_SIZE[gx] - 1: #Right side
+	elif j >= GRID_SIZE_X - 1: #Right side
 		lst.append((i+1,j))
 		lst.append((i+1,j-1))
 		lst.append((i,j-1))
@@ -188,7 +209,10 @@ def get_neighbors(cell):
 		lst.append((i-1,j))
 	else:
 		return [(i-1,j),(i-1,j-1),(i-1,j+1),(i,j-1),(i,j+1),(i+1,j-1),(i+1,j),(i+1,j+1)]
+		
 	return lst
+	
+#Returns True if `cell` is alive, `False` if cell is not alive
 	
 def is_alive(cell):
 	color = board.itemcget(cell,'fill')
@@ -196,73 +220,78 @@ def is_alive(cell):
 		return True
 	else:
 		return False
-def get_cell_neighbors(nbs):
-	n = []
-	for loc in nbs:
-		cell = rect_mat[loc[0]][loc[1]]
-		n.append(cell)
-	return n
+		
+#Creates a new cell at x,y
 	
 def create_new_cell(x,y):
 	cell = board.find_closest(x,y)[0]
+	
 	if not is_alive(cell):
 		neighbors = get_neighbors(cell)
-		print neighbors
 		
 		n1 = random.choice(neighbors)
 		n2 = random.choice(neighbors)
+		
 		board.itemconfigure(rect_mat[n1[0]][n1[1]], fill='black')
 		board.itemconfigure(rect_mat[n2[0]][n2[1]], fill='black')
 		board.itemconfigure(cell,fill='black')
+		
 		game_matrix[n1[0]][n1[1]] = 1
 		game_matrix[n2[0]][n2[1]] = 1
-		"""glider = (i,j),(i,j+1),(i,j-1),(i-1,j+1),(i-2,j),"""
-		# loc = find_in_matrix(cell) #POTENTIAL PROBLEM HERE
-		# (r,c) = loc
-		# lst = [(r,c+1),(r,c-1),(r-1,c+1),(r-2,c)]
-		# game_matrix[r][c] = 1
-		# for k in lst:
-			# game_matrix[k[0]][k[1]] = 1
-			# board.itemconfig(rect_mat[k[0]][k[1]],fill="black")
+		
 		board.update()
+		
+#Internal function to start game
 
 def start_game():
 	game_started = True
 	game_loop()
-	
+
+#Mouse click callback function to add cell to area and start the game
+
 def get_click(event):
 	create_new_cell(event.x,event.y)
-	print "yo"
+	
 	if not game_started:
 		start_game()
 
-	
+#main() -- sets up board and calls mainloop	
+
 def main():
 	if len(sys.argv) < 2:
 		width = DEFAULT_BOARD_WIDTH
 		height = DEFAULT_BOARD_HEIGHT
 		
 	root = Tk()
-	global game_started
-	game_started = False
+	
 	global board
+	global game_started
+	global rect_mat
+	
+	game_started = False
+	
 	board = Canvas(root,width=width,height=height, bg="white")
 	board.pack()
 	
-	global rect_mat
+	
 	rect_mat = []
-	rect_width = width/GRID_SIZE[gx]
-	rect_height = height/GRID_SIZE[gy]
+	rect_width = width/GRID_SIZE_X
+	rect_height = height/GRID_SIZE_Y
+	
 	x0 = 0
 	y0 = 0
-	for i in range(GRID_SIZE[gx]):
+	
+	for i in range(GRID_SIZE_X):
 		row = []
-		for k in range(GRID_SIZE[gy]):
+		
+		for k in range(GRID_SIZE_Y):
 			ident = board.create_rectangle(x0,y0,x0+rect_width,y0+rect_height)
 			row.append(ident)
 			x0 = x0 + rect_width	
+			
 		rect_mat.append(row)
 		del(row)
+		
 		x0 = 0
 		y0 = y0 + rect_height
 	
@@ -270,9 +299,11 @@ def main():
 	
 	#game matrix will represent the state of the box (1) or (0)
 	global game_matrix
-	game_matrix = [[0]*GRID_SIZE[gx] for i in range(GRID_SIZE[gy])]
+	game_matrix = [[0]*GRID_SIZE_X for i in range(GRID_SIZE_Y)]
+	
 	# function to set a square - print board.itemconfigure(rect_mat[50][50], fill = 'black')
 	#Function to get a square color - print board.itemcget(rect_mat[50][50],'fill')
+	
 	board.pack()
 	
 	board.bind('<Button-1>',get_click)
@@ -284,6 +315,3 @@ def main():
 	
 if __name__ == "__main__":
 	main()
-
-
-"""glider = (i,j),(i,j+1),(i,j-1),(i-1,j+1),(i-2,j),"""
